@@ -9,6 +9,8 @@ Since the Wayback Machine didn't like non-ascii characters I needed to convert s
 * Articles may be empty (to due of lack of data from the Wayback Machine)
 * Without output-dir macpro2jekyll will put all output in /tmp
 * Provied one examle file
+* My Ruby isn't the best, but im slowly learning..
+* Tested with ruby 2.0.0p481
 
 ## Installation
 
