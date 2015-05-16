@@ -1,0 +1,65 @@
+#!/usr/bin/env ruby
+
+require 'rubygems'
+require 'nokogiri' 
+require 'pp'
+require 'reverse_markdown'
+
+def clean_chars(text)
+    text = text.gsub(/ÃÂ¤|Ã¤/, "ä")
+    text = text.gsub(/ÃÂ¥|Ã¥/, "å")
+    text = text.gsub(/ÃÂ¶|Ã¶/, "ö")
+    text = text.gsub(/Ãâ|Ã/, "Ö")
+    text = text.gsub(/|ÃÂ|&nbsp;/, "")
+    text = text.gsub(/Ö|Ã/, "Ä")
+    text = text.gsub(/Ö¦|Ã/, "Å")
+    text = text.gsub(/Ãâ|Ãâ|â|â/, "\"")
+    text = text.gsub(/Ãâ|â/, "\'")
+    text = text.gsub(/ÃÂ©/, "é")
+    text = text.gsub(/ÃÂ©|Ã©/, "é")
+    text = text.gsub(/ÃÂ¼/, "ü")
+end
+
+
+in_file = ARGV[0]
+out_dir = ARGV[1]
+if out_dir.nil?
+    out_dir = "/tmp"
+end
+
+f = File.open(in_file)
+doc = Nokogiri::HTML(f)
+f.close
+
+title = doc.css('//title').text.to_s.gsub(/^\s+Macpro.se - ([^\s].+)/,'\1')
+title = title.gsub(/^MacPro.se - Nyheter, tester och artiklar fÃ¶r nordens Macproffs\s+»\s+Blog Archive\s+»\s+([^\s].+)/,'\1')
+title = title.gsub(/^MacPro.se - Nyheter, tester och artiklar fÃ¶r nordens Macproffs\s+»\s+([^\s].+)/,'\1')
+title = title.gsub(/^\sMacPro.se - ([^\s].+)/,'\1')
+title = clean_chars title
+text = doc.css('div.entrybody').to_s
+
+file_path = File.dirname(in_file)
+paged_article = Dir.glob("#{file_path}/*/index.html")
+paged_article.each do |file|
+    if (file =~ /\/_\/index.html/)
+        next
+    end
+    f = File.open(file)
+    doc = Nokogiri::HTML(f)
+    f.close
+    text << doc.css('div.entrybody').to_s
+end
+
+result = ReverseMarkdown.convert(text).to_s
+result = clean_chars result
+output_file = in_file.gsub(/.*\/(\d{4}\/\d{2}\/\d{2}\/.*)\/index.html/,'\1').gsub(/\//, '-').gsub(/_/, '-')
+output_file << ".markdown"
+
+output = "---\n"
+output << "layout: post\n"
+output << "title: #{title}\n"
+output << "---\n"
+output << result
+
+#puts output
+File.open("#{out_dir}/#{output_file}", 'w') { |file| file.write(output) }
